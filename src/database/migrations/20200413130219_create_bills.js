@@ -1,6 +1,6 @@
 exports.up = function(knex) {
   return knex.schema.createTable('bills', function (table) {
-    table.string('id').primary();
+    table.increments();
     table.string('title').notNullable();
     table.date('date').notNullable();
     table.float('value');

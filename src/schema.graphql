@@ -1,0 +1,35 @@
+type User {
+  id: Int!
+  name: String!
+  email: String!
+  password: String!
+  created_at: String
+  updated_at: String
+}
+
+type Bill {
+  id: Int!
+  title: String!
+  date: String!
+  value: Float
+  created_at: String
+  updated_at: String
+}
+
+type Query {
+  users: [User!]!
+  user(id: Int!): User
+
+  bills: [Bill!]!
+  bill(id: Int!): Bill
+}
+
+type Mutation {
+  createUser(name: String!, email: String!, password: String!): User
+  updateUser(id: Int! name: String!, email: String!, new_password: String): User
+  deleteUser(id: Int!): User
+
+  createBill(title: String!, date: String!, value: Float): Bill
+  updateBill(id: Int! title: String!, date: String!, value: Float): Bill
+  deleteBill(id: Int!): Bill
+}
