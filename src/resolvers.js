@@ -1,4 +1,5 @@
 const connection = require('./database/connection');
+const brcypt = require('bcryptjs');
 
 module.exports={
   Query: {
@@ -16,16 +17,23 @@ module.exports={
         .insert({
           name,
           email,
-          password
+          password: brcypt.hashSync(password, brcypt.genSaltSync(8))
         })
 
       return newUser;
     },
 
-    updateUser: async (_, { id, name, email, new_password }) => {
-      if (new_password || new_password === '') {
+    updateUser: async (_, { id, name, email, new_password, old_password }) => {
+      const { password } = await connection('users')
+        .where('id', id)
+        .select('password')
+        .first();
+
+      const passwordMatches = await brcypt.compareSync(old_password, password);
+      
+      if (new_password && passwordMatches) {
         const [user] = await connection('users')
-          .where({ id: id })
+          .where('id', id)
           .returning('*')
           .update({
             name,
@@ -36,7 +44,7 @@ module.exports={
         return user;
       } else {
         const [user] = await connection('users')
-          .where({ id: id })
+          .where('id', id)
           .returning('*')
           .update({
             name,
@@ -65,7 +73,7 @@ module.exports={
 
     updateBill: async (_, { id, title, date, value }) => {
       const [bill] = await connection('bills')
-        .where({ id: id })
+        .where('id', id)
         .returning('*')
         .update({
           title,

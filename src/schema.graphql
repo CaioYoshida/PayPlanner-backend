@@ -26,7 +26,7 @@ type Query {
 
 type Mutation {
   createUser(name: String!, email: String!, password: String!): User
-  updateUser(id: Int! name: String!, email: String!, new_password: String): User
+  updateUser(id: Int! name: String!, email: String!, new_password: String, old_password: String): User
   deleteUser(id: Int!): User
 
   createBill(title: String!, date: String!, value: Float): Bill
