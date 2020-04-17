@@ -5,15 +5,18 @@ type User {
   password: String!
   created_at: String
   updated_at: String
+  bills: [Bill!]!
 }
 
 type Bill {
   id: Int!
+  user_id: Int!
   title: String!
   date: String!
   value: Float
   created_at: String
   updated_at: String
+  user: User!
 }
 
 type Query {
@@ -29,7 +32,7 @@ type Mutation {
   updateUser(id: Int! name: String!, email: String!, new_password: String, old_password: String): User
   deleteUser(id: Int!): User
 
-  createBill(title: String!, date: String!, value: Float): Bill
+  createBill(user_id: Int!, title: String!, date: String!, value: Float): Bill
   updateBill(id: Int! title: String!, date: String!, value: Float): Bill
   deleteBill(id: Int!): Bill
 }

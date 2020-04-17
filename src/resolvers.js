@@ -3,14 +3,60 @@ const brcypt = require('bcryptjs');
 
 module.exports={
   Query: {
-    users: async () => await connection('users').select('*'),
-    user: async (_, { id }) => await connection('users').where('id', id ),
+    /**
+     * user queries
+     */
 
-    bills: async () => await connection('bills').select('*'),
-    bill: async (_, { id }) => await connection('bills').where('id', id ),
+    users: async () => {
+      const users = await connection('users').select('*');
+
+      const usersWithBills = await users.map(user => ({
+        ...user,
+        bills: connection('bills').where('user_id', user.id).select('*')
+      }));
+
+      return usersWithBills;
+      },
+
+    user: async (_, { id }) => {
+      const user = await connection('users').where('id', id ).first();
+
+      user.bills = await connection('bills').where('user_id', 1).select('*')
+    
+      return user;
+    },
+
+    /**
+     * bill queries
+     */
+
+    bills: async () => {
+      const bills = await connection('bills').select('*');
+
+      const billsWithUser = await bills.map(bill => ({
+        ...bill,
+        user: connection('users').where('id', bill.user_id).first()
+      }));
+
+      return billsWithUser;
+    },
+
+    bill: async (_, { id }) => {
+      const bill = await connection('bills')
+        .where('id', id )
+        .first();
+
+      bill.user = await connection('users').where('id', bill.user_id).first()
+
+      return bill;
+    },
   },
 
   Mutation: {
+    /**
+     * user mutations
+     */
+
     createUser: async (_, { name, email, password }) => {
       const [newUser] = await connection('users')
         .returning('*')
@@ -22,7 +68,6 @@ module.exports={
 
       return newUser;
     },
-
     updateUser: async (_, { id, name, email, new_password, old_password }) => {
       const { password } = await connection('users')
         .where('id', id)
@@ -58,11 +103,15 @@ module.exports={
       await connection('users').where('id', id).delete();
     },
 
+    /**
+     * bill mutations
+     */
 
-    createBill: async (_, { title, date, value}) => {
+    createBill: async (_, { user_id, title, date, value}) => {
       const [newBill] = await connection('bills')
         .returning('*')
         .insert({
+          user_id,
           title,
           date,
           value
