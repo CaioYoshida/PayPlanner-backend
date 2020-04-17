@@ -20,10 +20,18 @@ module.exports={
 
     user: async (_, { id }) => {
       const user = await connection('users').where('id', id ).first();
+      
+      if(user) {
+        const bills = await connection('bills')
+          .where('user_id', user.id)
+          .select('*');
+        
+        user.bills = bills;
 
-      user.bills = await connection('bills').where('user_id', 1).select('*')
-    
-      return user;
+        return user;
+      } else {
+        return new Error('User not found');
+      }
     },
 
     /**
@@ -46,9 +54,13 @@ module.exports={
         .where('id', id )
         .first();
 
-      bill.user = await connection('users').where('id', bill.user_id).first()
+      if (bill) {
+        bill.user = await connection('users').where('id', bill.user_id).first()
 
-      return bill;
+        return bill;  
+      } else {
+        return new Error('Bill not found!');
+      }
     },
   },
 
@@ -75,8 +87,11 @@ module.exports={
         .first();
 
       const passwordMatches = await brcypt.compareSync(old_password, password);
-      
-      if (new_password && passwordMatches) {
+
+      if (new_password && !passwordMatches) {
+        return new Error("Password doesn't match!");
+
+      }else if (new_password && passwordMatches) {
         const [user] = await connection('users')
           .where('id', id)
           .returning('*')
@@ -87,6 +102,7 @@ module.exports={
           });
 
         return user;
+
       } else {
         const [user] = await connection('users')
           .where('id', id)
@@ -97,7 +113,7 @@ module.exports={
           });
 
         return user;
-      }
+      };
     },
     deleteUser: async (_, { id }) => {
       await connection('users').where('id', id).delete();
