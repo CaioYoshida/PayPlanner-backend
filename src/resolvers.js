@@ -1,5 +1,8 @@
 const connection = require('./database/connection');
 const brcypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+
+const { expiresIn, secret } = require('./config/authConfig');
 
 module.exports={
   Query: {
@@ -7,7 +10,11 @@ module.exports={
      * user queries
      */
 
-    users: async () => {
+    users: async (root, args, context, info) => {
+      if (!context.token) {
+        return [];
+      }
+
       const users = await connection('users').select('*');
 
       const usersWithBills = await users.map(user => ({
@@ -15,8 +22,10 @@ module.exports={
         bills: connection('bills').where('user_id', user.id).select('*')
       }));
 
+      console.log(`Token: ${context.user_id}`);
+
       return usersWithBills;
-      },
+    },
 
     user: async (_, { id }) => {
       const user = await connection('users').where('id', id ).first();
@@ -120,10 +129,32 @@ module.exports={
     },
 
     /**
+     * Login mutations
+     */
+
+    login: async (_, { email, password }, { request }) => {
+      const user = await connection('users').where('email', email).first();
+
+      if (!user) {
+        return new Error('User not found!');
+      }
+
+      const passwordMatches = await brcypt.compareSync(password, user.password);
+
+      if (!passwordMatches) {
+        return new Error("Password doesn't macth");
+      }
+
+      const token = jwt.sign({claims: { id: user.id }}, secret, {expiresIn: expiresIn});
+
+      return token;
+    },
+
+    /**
      * bill mutations
      */
 
-    createBill: async (_, { user_id, title, date, value}) => {
+    createBill: async (_, { user_id, title, date, value }) => {
       const [newBill] = await connection('bills')
         .returning('*')
         .insert({

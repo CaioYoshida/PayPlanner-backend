@@ -28,6 +28,8 @@ type Query {
 }
 
 type Mutation {
+  login(email: String! password: String!): String
+
   createUser(name: String!, email: String!, password: String!): User
   updateUser(id: Int! name: String!, email: String!, new_password: String, old_password: String): User
   deleteUser(id: Int!): User
